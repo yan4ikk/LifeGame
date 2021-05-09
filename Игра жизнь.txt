@@ -1,0 +1,299 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
+#include <vector>
+#include <Windows.h>
+#include <list>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <numeric>
+#include <random>
+#include <bitset>
+
+using namespace std;
+
+COORD pos;
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+class iGame
+{
+public:
+	int seed;
+	double probability;
+    virtual void runGame(int numIt) = 0;
+    iGame()
+    {
+        seed = 0, probability = 0;
+    }
+};
+class Game2d : public iGame
+{
+public:
+    int a, b;
+    View2d view;
+    char** field;
+    char** field_next;
+    int getCount(int x, int y)
+    {
+        int count = 0;
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+                if (field[(x + i + a) % a][(y + j + b) % b] == view.livingCell)
+                    count++;
+        }
+        return count;
+    }
+    Game2d(int a1, int b1, double probability)
+    {
+        int tmp;
+        a = a1;
+        b = b1;
+        srand(time(NULL));
+        this->field = new char* [a];
+        this->field_next = new char* [a];
+        for (int i = 0; i < a; i++)
+        {
+            field[i] = new char[b];
+            field_next[i] = new char[b];
+            for (int j = 0; j < b; j++)
+            {
+                tmp = rand() % (100);
+                if (tmp < 100 * probability)
+                    field[i][j] = view.livingCell;
+                else
+                    field[i][j] = view.dyingCell;
+                field_next[i][j] = view.dyingCell;
+            }
+        }
+    }
+    void runGame(int numIt) 
+    {
+		printf("Game on\n");
+        view.setField2d(field, a, b);
+        view.draw();
+        for(int tmp=0; tmp < numIt; tmp++)
+        {
+            for (int i = 0; i < a; i++)
+            {
+                for (int j = 0; j < b; j++)
+                {
+                    int count = getCount(i, j);
+                    if (field[i][j] == view.livingCell)
+                        count--;
+                    if (field[i][j] == view.livingCell && (count < 2 || count > 3))
+                        field_next[i][j] = view.dyingCell;
+                    else if (field[i][j] == view.dyingCell && count == 3)
+                        field_next[i][j] = view.livingCell;
+                    else
+                        field_next[i][j] = field[i][j];
+                }
+            }
+            for (int i = 0; i < a; i++)
+            {
+                for (int j = 0; j < b; j++)
+                {
+                    field[i][j] = field_next[i][j];
+
+                }
+            }
+        }
+		printf("Results\n");
+        view.setField2d(field, a, b);
+        view.draw();
+		printf("Game ower\n");
+    }
+};
+class Game3d :public iGame
+{
+public:
+    int a, b, c;
+    View3d view;
+    char*** field;
+    char*** field_next;
+    int getCount(int x, int y, int z)
+    {
+        int count = 0;
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                for (int k = -1; k <= 1; k++)
+                    if (field[(x + i + a) % a][(y + j + b) % b][(z + k + c) % c] == view.livingCell)
+                        count++;
+            }
+        }
+        return count;
+    }
+    Game3d(int a1, int b1, int c1, double probability)
+    {
+        srand(time(NULL));
+        a = a1;
+        b = b1;
+        c = c1;
+        field = new char** [a];
+        field_next = new char** [a];
+        for (int i = 0; i < a; i++)
+        {
+            field[i] = new char* [b];
+            field_next[i] = new char* [b];
+            for (int j = 0; j < b; j++)
+            {
+                field[i][j] = new char[c];
+                field_next[i][j] = new char[c];
+                for (int k = 0; k < c; k++)
+                {
+                       int tmp = rand() % (100);
+                        if (tmp < 100 * probability)
+                            field[i][j][k] = view.livingCell;
+                        else
+                            field[i][j][k] = view.dyingCell;
+                        field_next[i][j][k] = view.dyingCell;
+                }
+            }
+        }
+    }
+    void runGame(int numIt) 
+    {
+		printf("Game on\n");
+        view.setField3d(field, a, b, c);
+        view.draw();
+        for(int tmp=0; tmp < numIt; tmp++)
+        {
+            for (int i = 0; i < a; i++)
+            {
+                for (int j = 0; j < b; j++)
+                    for (int k = 0; k < c; k++)
+                    {
+                        int count = getCount(i, j, k);
+                        if (field[i][j][k] == view.livingCell)
+                            count--;
+                        if (field[i][j][k] == view.livingCell && (getCount(i, j, k) < 5 || getCount(i, j, k) > 8))
+                            field_next[i][j][k] = view.dyingCell;
+                        else if (field[i][j][k] == view.dyingCell && getCount(i, j, k) == 8)
+                            field_next[i][j][k] = view.livingCell;
+                    }
+            }
+            for (int i = 0; i < a; i++)
+            {
+                for (int j = 0; j < b; j++)
+                    for (int k = 0; k < c; k++)
+                        field[i][j][k] = field_next[i][j][k];
+            }
+        }
+		printf("Results\n");
+        view.setField3d(field, n, m, l);
+        view.draw();
+		printf("Game ower\n");
+    }
+};
+class iView
+{
+public:
+	int a;
+    char livingCell;
+    char dyingCell;
+    char* drawField;
+    iView()
+    {
+        this->livingCell = '@';
+        this->dyingCell = '.';
+        this->a = 1;
+        this->drawField = new char [a];
+    }
+    iView(int a, char t)
+    {
+        this->livingCell = '@';
+        this->dyingCell = '.';
+        this->a = a;
+        this->drawField = new char[a];
+    }
+};
+class View2d : public iView
+{
+public:
+    int b;
+    char** drawField_2d;
+    View2d()
+    {
+        this->b = 1;
+        this->drawField_2d = new char* [b];
+        for (int i = 0; i < b; i++)
+            drawField_2d[i] = drawField;
+    }
+    void setField2d(char** field, int a, int b)
+    {
+        this->a = a;
+        this->b = b;
+        drawField_2d = new char* [a];
+        for (int i = 0; i < a; i++) 
+        {
+            drawField_2d[i] = new char[b];
+            for (int j = 0; j < b; j++)
+                drawField_2d[i][j] = field[i][j];
+        }
+    };
+   void draw()
+    {
+        for (int i = 0; i < a; i++)
+        {
+            fwrite(drawField_2d[i], sizeof(char), b, stdout);
+            printf("\n");
+        }
+    }
+};
+class View3d : public View2d
+{
+public:
+    int c;
+    char*** drawField_3d;
+    View3d()
+    {
+        this->c = 1;
+        this->drawField_3d = new char** [c];
+        for (int i = 0; i < c; i++)
+            drawField_3d[i] = drawField_2d;
+    }
+    void setField3d(char*** field, int a, int b, int c)
+    {
+        this->a = a;
+        this->b = b;
+		this->c = c;
+        drawField_3d = new char** [c];
+        for (int i = 0; i < a; i++) 
+        {
+            drawField_3d[i] = new char* [a];
+            for (int j = 0; j < b; j++)
+            {
+                drawField_3d[i][j] = new char[b];
+                for (int k = 0; k < c; k++)
+                    drawField_3d[i][j][k] = field[i][j][k];
+            }
+        }
+
+    };
+    void draw()
+    {
+        for (int i = 0; i < a; i++)
+        {
+            for (int j = 0; j < b; j++)
+            {
+                fwrite(drawField_3d[i][j], sizeof(char), c, stdout);
+                printf("\n");
+            }
+            cout << endl;
+        }
+    }
+};
+
+int main()
+{
+    iGame* aa2;
+    Game2d* bb2 = new Game2d(6, 6, 0.5);
+    aa2 = bb2;
+    iGame* aa3;
+    Game3d* bb3 = new Game3d(2, 4, 4, 0.2);
+    aa3 = bb3;
+    aa2->runGame(1);
+    aa3->runGame(1);
+}
