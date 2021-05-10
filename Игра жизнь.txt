@@ -103,6 +103,16 @@ public:
         view.draw();
 		printf("Game ower\n");
     }
+	~Game2d()
+    {
+        for (int i = 0; i < b; i++)
+            delete[]field[i];
+        delete[]field;
+        for (int i = 0; i < b; i++)
+            delete[]field_next[i];
+        delete[]field_next;
+        a = 0, b=0;
+    }
 };
 class Game3d :public iGame
 {
@@ -186,6 +196,24 @@ public:
         view.draw();
 		printf("Game ower\n");
     }
+	~Game3d()
+    {
+        for (int i = 0; i < c; i++)
+        {
+            for (int k = 0; k < b; k++)
+                delete[] field[i][k];
+            delete[] field[i];
+        }
+        delete[] field;
+        for (int i = 0; i < c; i++)
+        {
+            for (int j = 0; j < b; j++)
+                delete[] field_next[i][j];
+            delete[] field_next[i];
+        }
+        delete[] field_next;
+        a = 0, b = 0, c = 0;
+    }
 };
 class iView
 {
@@ -241,6 +269,13 @@ public:
             printf("\n");
         }
     }
+	~View2d()
+   {
+       for (int i = 0; i < b; i++)
+           delete[]drawField_2d[i];
+       delete[]drawField_2d;
+       b = 0;
+   }
 };
 class View3d : public View2d
 {
@@ -283,6 +318,17 @@ public:
             }
             cout << endl;
         }
+    }
+	~View3d()
+    {
+        for (int i = 0; i < c; i++)
+        {
+            for (int j = 0; j < b; j++)
+                delete[]drawField_3d[i][j];
+            delete[]drawField_3d[i];
+        }
+        delete[]drawField_3d;
+        c = 0;
     }
 };
 
